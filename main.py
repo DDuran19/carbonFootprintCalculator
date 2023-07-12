@@ -9,7 +9,11 @@ CURRENTDIRECTORY = os.path.dirname(os.path.abspath(__file__))
 MODE = CTk.get_appearance_mode()
 DELETEICON = CTk.CTkImage(Image.open(f"{CURRENTDIRECTORY}/icons/{MODE}Delete.png"))
 EDITICON = CTk.CTkImage(Image.open(f"{CURRENTDIRECTORY}/icons/{MODE}Edit.png"))
+ENTER_KEY = "<Return>"
+KEY_PRESS = '<KeyPress>'
 
+TABS = ["Commute", "Vehicle", "Ownership", "Results"]
+KM = None
 
 class CarbonFootprintCalculator(CTk.CTk):
     def __init__(self):
@@ -22,6 +26,7 @@ class CarbonFootprintCalculator(CTk.CTk):
         self.setup_main_window_sizes()
         self.setup_grids()
         CTk.set_appearance_mode("Dark")
+
     def setup_main_window_sizes(self):
         width = 1020
         height = 720
@@ -32,12 +37,13 @@ class CarbonFootprintCalculator(CTk.CTk):
         alignStr = f"{width}x{height}+{x}+{y}"
         self.geometry(alignStr)
         self.resizable(width=False, height=False)
+
     def setup_grids(self):
         self.grid_rowconfigure(0)
         self.grid_rowconfigure(1)
         self.columnconfigure(0, weight=0, minsize=50)
-        self.columnconfigure(1, weight=0, minsize=620)
-        self.columnconfigure(2, weight=0, minsize=50)
+        self.columnconfigure(1, weight=0, minsize=750)
+
     def setup_widgets(self):
         self.CommuteDetailsFrame = CommuteDetailsFrame(
             master=self,
@@ -45,7 +51,9 @@ class CarbonFootprintCalculator(CTk.CTk):
             border_color=("#0000FF", "#00FF00"),
             border_width=2,
         )
-        self.CommuteDetailsFrame.grid(row=1, column=0, sticky="nsew")
+        self.CommuteDetailsFrame.grid(
+            row=1, column=0, sticky="nsew", padx=13, pady=(18, 0)
+        )
         self.commuteScrollable = Scrollable(self.CommuteDetailsFrame)
         self.commuteScrollable.grid(row=0, column=0, padx=5, pady=5, sticky="nsew")
         self.commutes = []
@@ -53,18 +61,20 @@ class CarbonFootprintCalculator(CTk.CTk):
         self.btn_change_theme = CTk.CTkButton(
             master=self, command=self.change_theme, text="Change Theme"
         )
-        self.btn_change_theme.grid(row=0, column=2)
+        self.btn_change_theme.grid(row=0, column=1, pady=(13, 0))
 
         self.btn_add_commute = CTk.CTkButton(
             master=self, command=self.add_commute, text="Add"
         )
-        self.btn_add_commute.grid(row=0, column=0)
+        self.btn_add_commute.grid(row=0, column=0, pady=(13, 0))
 
         self.QuestionsFrame = QuestionsFrame(
-            master=self, depth=2,
+            master=self,
+            depth=0,
             corner_radius=15,
             border_color=("#0000FF", "#00FF00"),
             border_width=2,
+            command=self.tab_handler,
         )
         self.QuestionsFrame.grid(row=1, column=1, sticky="nsew")
 
@@ -94,6 +104,15 @@ class CarbonFootprintCalculator(CTk.CTk):
         commute.pack(anchor="w", padx=(1, 0), pady=1, fill="both")
         self.commutes.append(commute)
 
+    def tab_handler(self):
+        selected = self.QuestionsFrame.get()
+        selected_index = TABS.index(selected)
+        try: 
+            for index, value in enumerate(TABS):
+                if index > selected_index:
+                    self.QuestionsFrame.delete(value)
+        except ValueError:
+            pass
 
 class Scrollable(CTk.CTkScrollableFrame):
     def __init__(self, master, **kwargs):
@@ -134,94 +153,150 @@ class Commute(CTk.CTkFrame):
         self.delete_btn.grid(row=0, column=1, sticky="e")
 
 
-class QuestionsFrame(CTk.CTkFrame):
+class QuestionsFrame(CTk.CTkTabview):
     def __init__(self, master, depth, **kwargs):
         super().__init__(master, **kwargs)
         self.depth = depth
+        self.font = CTk.CTkFont(family="Helvetica", size=20)
         self.setup_tabs()
 
     def setup_tabs(self):
-        path = ["Commute", "Vehicle", "Ownership", "Fuel Type", "results"]
-        self.tabs = CTk.CTkTabview(self)
-        self.tabs.pack(fill = CTk.BOTH, expand=True)
-        for i in range(self.depth+1):
-            tab = self.tabs.add(path[i])
+        self.tab_commute()
 
-            if path[i] == "Commute":
-                self.tab_commute(tab)
-            elif path[i] == "Vehicle":
-                self.tab_vehicle(tab)
-            elif path[i] == "Ownership":
-                self.tab_ownership(tab)
-            elif path[i] == "Fuel Type":
-                self.tab_fuelType(tab)
+    def tab_commute(self):
+        parent = self.add(TABS[0])
+        self.set(TABS[0])
+        self.commute_label = CTk.CTkLabel(
+            parent, text="How far (in Km) is your daily commute?", font=self.font
+        )
+        self.commute_label.pack(side=CTk.TOP, pady=20)
 
-    # Commute Tab
-    def tab_commute(self, parent):
-        CTk.CTkLabel(parent, text='How far (in Km) is your daily commute?').grid(row=0, column=0)
         self.commute_entry = CTk.CTkEntry(parent)
-        self.commute_entry.grid(row=1, column=0)
+        self.commute_entry.pack(side=CTk.TOP)
 
-    def tab_vehicle(self, parent):
-        CTk.CTkLabel(parent, text='Which of the following vehicles are you using?').grid(row=0, column=0)
-        self.vehicle_option_menu = CTk.CTkOptionMenu(parent,values=
-                                                    ['Motorcycle',
-                                                    'Tricycle',
-                                                    'Jeepney',
-                                                    'Taxi',
-                                                    'Car-Hatchback',
-                                                    'Car-Sedan',
-                                                    'Car-SUV',
-                                                    'Pick-up',
-                                                    'Bus',
-                                                    'Van'])
-        self.vehicle_option_menu.grid(row=0, column=1)
-                                                    
-    def tab_ownership(self, parent):
-        CTk.CTkLabel(parent, text='Do you own the vehicle?').grid(row=0, column=0)
-        self.ownership_option_menu = CTk.CTkOptionMenu(parent,values=
-                                                        ['Yes',
-                                                        'No'],
-                                                        command=self.toggle_fuel_options)
-        self.ownership_option_menu.grid(row=0, column=1)
+        self.commute_nextBtn = CTk.CTkButton(
+            parent, text="Next", command=self.tab_vehicle, state=(CTk.DISABLED if KM == None else CTk.NORMAL)
+        )
+        self.commute_nextBtn.pack(side=CTk.TOP)
+        self.commute_entry.bind(ENTER_KEY, lambda event: self.validate_entry(event = event, entry=self.commute_entry,button=self.commute_nextBtn, command=self.tab_vehicle))
+        self.commute_entry.bind(KEY_PRESS,lambda event: self.validate_entry(event = event, entry=self.commute_entry,button=self.commute_nextBtn))
+    def tab_vehicle(self):
+        parent = self.add(TABS[1])
+        self.set(TABS[1])
+        self.vehicle = ""
+        self.vehicle_label = CTk.CTkLabel(
+            parent,
+            font=self.font,
+            text="Which of the following vehicles are you using?",
+        ).pack(side=CTk.TOP, pady=20)
+        self.vehicle_option_menu = CTk.CTkOptionMenu(
+            parent,
+            command=self.tab_vehicle_select,
+            values=[
+                "Motorcycle",
+                "Tricycle",
+                "Jeepney",
+                "Taxi",
+                "Car-Hatchback",
+                "Car-Sedan",
+                "Car-SUV",
+                "Pick-up",
+                "Bus",
+                "Van",
+            ],
+        )
+        self.vehicle_option_menu.pack(side=CTk.TOP)
 
-        CTk.CTkLabel(parent, text='What type of fuel are you using?').grid(row=1, column=0)
-        self.fuel_type_option_menu = CTk.CTkOptionMenu(parent, values=
-                                                       ['Gasoline',
-                                                       'Diesel'])
-        self.fuel_type_option_menu.grid(row=1, column=1)
-        
-        self.fuel_usage_label = CTk.CTkLabel(parent, text=f'Approximately how many liters of  do you use in a day?')
-        self.fuel_usage_label.grid(row=2, column=0)
-        self.fuel_usage_entry = CTk.CTkEntry(parent)
-        self.fuel_usage_entry.grid(row=2, column=1)
-        
+    def tab_vehicle_select(self, chosen):
+        self.vehicle = chosen
+        self.tab_ownership()
+
+    def tab_ownership(self):
+        parent = self.add(TABS[2])
+        self.set(TABS[2])
+        question = f"Do you own the {self.vehicle}?"
+        self.ownership_frame = CTk.CTkFrame(
+            parent, bg_color="transparent", fg_color="transparent"
+        )
+        self.fuelType_frame = CTk.CTkFrame(
+            parent, bg_color="transparent", fg_color="transparent"
+        )
+        self.fuelUsage_frame = CTk.CTkFrame(
+            parent, bg_color="transparent", fg_color="transparent"
+        )
+        self.ownership_frame.pack(side=CTk.TOP, fill=CTk.X)
+
+        self.ownership_label = CTk.CTkLabel(
+            self.ownership_frame, text=question, font=self.font
+        )
+        self.ownership_option_menu = CTk.CTkOptionMenu(
+            self.ownership_frame, values=["No", "Yes"], command=self.toggle_fuel_options
+        )
+        self.ownership_label.pack(side=CTk.LEFT, pady=(0, 20), padx=(0, 20))
+        self.ownership_option_menu.pack(side=CTk.RIGHT, pady=(0, 20))
+
+        self.fuelType_label = CTk.CTkLabel(
+            master=self.fuelType_frame,
+            font=self.font,
+            text="What type of fuel are you using?",
+        )
+        self.fuel_type_option_menu = CTk.CTkOptionMenu(
+            master=self.fuelType_frame, values=["Gasoline", "Diesel"]
+        )
+
+        self.fuel_usage_label = CTk.CTkLabel(
+            master=self.fuelUsage_frame,
+            font=self.font,
+            text=f"Approximately how many liters of  do you use in a day?",
+        )
+        self.fuel_usage_entry = CTk.CTkEntry(master=self.fuelUsage_frame)
+
+        self.fuelType_label.pack(side=CTk.LEFT, pady=(0, 20), padx=(0, 20))
+        self.fuel_type_option_menu.pack(side=CTk.RIGHT, pady=(0, 20))
+
+        self.fuel_usage_label.pack(side=CTk.LEFT, pady=(0, 20), padx=(0, 20))
+        self.fuel_usage_entry.pack(side=CTk.RIGHT, pady=(0, 20))
+        self.fuel_usage_entry.bind(ENTER_KEY, lambda event: print("the end"))
         # Initial state of ownership
         self.owner_state = False
-        self.toggle_fuel_options('No')
+        self.toggle_fuel_options("No")
 
-    def tab_fuelType(self, parent):
-        #write code here
-        pass                                             
-  
     # This function will be called whenever the "ownership" dropdown value is changed.
     # Based on whether the ownership is 'Yes' or 'No', it either shows or hides the fuel usage input and label accordingly.
-    def toggle_fuel_options(self, select):  
-        self.owner_state = True if select == 'Yes' else  False
+    def toggle_fuel_options(self, select):
+        self.owner_state = True if select == "Yes" else False
 
         if self.owner_state:
-            self.fuel_type_option_menu.grid()
-            self.fuel_usage_label.grid()
-            self.fuel_usage_entry.grid()
-        else:
-            self.fuel_type_option_menu.grid_remove()
-            self.fuel_usage_label.grid_remove()
-            self.fuel_usage_entry.grid_remove()
+            self.fuelType_frame.pack(side=CTk.TOP, fill=CTk.X)
+            self.fuelUsage_frame.pack(side=CTk.TOP, fill=CTk.X)
 
+        else:
+            self.fuelType_frame.pack_forget()
+            self.fuelUsage_frame.pack_forget()
+
+    def tab_results(self):
+        parent = self.add(TABS[3])
+        self.set(TABS[3])
+
+    def validate_entry(self, event, entry: CTk.CTkEntry, button: CTk.CTkButton, command = None):
+        value = event.char
+        if not value.isdigit() and value != "\x0D":
+            button.configure(state=CTk.DISABLED)
+        elif entry.get().isdigit() and command is not None:
+            command()
+        elif entry.get().isdigit():
+            button.configure(state=CTk.NORMAL)
+        else:
+            button.configure(state=CTk.DISABLED)
+
+        if command is None:
+            return
+        
 
 class CommuteQuestionFrame(CTk.CTkFrame):
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs)
+
 
 app = CarbonFootprintCalculator()
 app.mainloop()
