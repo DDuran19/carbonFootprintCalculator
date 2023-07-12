@@ -14,6 +14,7 @@ KEY_PRESS = '<KeyPress>'
 
 TABS = ["Commute", "Vehicle", "Ownership", "Results"]
 KM = None
+L = None
 
 class CarbonFootprintCalculator(CTk.CTk):
     def __init__(self):
@@ -166,20 +167,27 @@ class QuestionsFrame(CTk.CTkTabview):
     def tab_commute(self):
         parent = self.add(TABS[0])
         self.set(TABS[0])
-        self.commute_label = CTk.CTkLabel(
-            parent, text="How far (in Km) is your daily commute?", font=self.font
-        )
-        self.commute_label.pack(side=CTk.TOP, pady=20)
+        self.commute_frame = CTk.CTkFrame(master=parent, fg_color="transparent", bg_color="transparent")
+        self.commute_frame.pack(side=CTk.TOP, pady=20, fill=CTk.X)
+        self.commute_label = CTk.CTkLabel(master=self.commute_frame, text="How far (in Km) is your daily commute?", font=self.font)
+        self.commute_label.pack(side=CTk.LEFT)
+        self.commute_entry = CTk.CTkEntry(master=self.commute_frame)
+        self.commute_entry.pack(side=CTk.RIGHT)
 
-        self.commute_entry = CTk.CTkEntry(parent)
-        self.commute_entry.pack(side=CTk.TOP)
+        self.commute_frame_days = CTk.CTkFrame(parent, fg_color="transparent", bg_color="transparent")
+        self.commute_frame_days.pack(side=CTk.TOP, pady=20, fill=CTk.X)
+        self.commute_label_days = CTk.CTkLabel(self.commute_frame_days, text="How often (in days) do you commute?", font=self.font)
+        self.commute_label_days.pack(side=CTk.LEFT)
+        self.commute_entry_days = CTk.CTkEntry(self.commute_frame_days)
+        self.commute_entry_days.pack(side=CTk.RIGHT)
+        days = CTk.StringVar(self.commute_entry_days, value="7")
+        self.commute_entry_days.configure(textvariable=days)
 
-        self.commute_nextBtn = CTk.CTkButton(
-            parent, text="Next", command=self.tab_vehicle, state=(CTk.DISABLED if KM == None else CTk.NORMAL)
-        )
-        self.commute_nextBtn.pack(side=CTk.TOP)
-        self.commute_entry.bind(ENTER_KEY, lambda event: self.validate_entry(event = event, entry=self.commute_entry,button=self.commute_nextBtn, command=self.tab_vehicle))
-        self.commute_entry.bind(KEY_PRESS,lambda event: self.validate_entry(event = event, entry=self.commute_entry,button=self.commute_nextBtn))
+
+        self.commute_nextBtn = CTk.CTkButton(parent, text="Next", command=self.tab_vehicle, state=(CTk.DISABLED if KM is None else CTk.NORMAL))
+        self.commute_nextBtn.pack(side=CTk.BOTTOM)
+        self.commute_entry.bind(ENTER_KEY, lambda event: self.validate_entry(event = event, entry=self.commute_entry, button=self.commute_nextBtn, command=self.tab_vehicle))
+        self.commute_entry.bind(KEY_PRESS,lambda event: self.validate_entry(event = event, entry=self.commute_entry, button=self.commute_nextBtn))
     def tab_vehicle(self):
         parent = self.add(TABS[1])
         self.set(TABS[1])
@@ -247,16 +255,22 @@ class QuestionsFrame(CTk.CTkTabview):
         self.fuel_usage_label = CTk.CTkLabel(
             master=self.fuelUsage_frame,
             font=self.font,
-            text=f"Approximately how many liters of  do you use in a day?",
+            text=f"Approximately how many liters of fuel do you use in a week?",
         )
-        self.fuel_usage_entry = CTk.CTkEntry(master=self.fuelUsage_frame)
+        self.fuel_usage_entry = CTk.CTkEntry(master=self.fuelUsage_frame, placeholder_text="type 0 if unsure")
 
         self.fuelType_label.pack(side=CTk.LEFT, pady=(0, 20), padx=(0, 20))
         self.fuel_type_option_menu.pack(side=CTk.RIGHT, pady=(0, 20))
 
         self.fuel_usage_label.pack(side=CTk.LEFT, pady=(0, 20), padx=(0, 20))
         self.fuel_usage_entry.pack(side=CTk.RIGHT, pady=(0, 20))
-        self.fuel_usage_entry.bind(ENTER_KEY, lambda event: print("the end"))
+        self.ownership_nextBtn = CTk.CTkButton(
+            parent, text="Next", command=self.tab_results, state=CTk.NORMAL)
+        self.ownership_nextBtn.pack(side=CTk.BOTTOM)
+
+        self.fuel_usage_entry.bind(ENTER_KEY, lambda event: self.validate_entry(event = event, entry=self.fuel_usage_entry,button=self.ownership_nextBtn, command=self.tab_results))
+        self.fuel_usage_entry.bind(KEY_PRESS,lambda event: self.validate_entry(event = event, entry=self.fuel_usage_entry,button=self.ownership_nextBtn))
+
         # Initial state of ownership
         self.owner_state = False
         self.toggle_fuel_options("No")
@@ -269,10 +283,12 @@ class QuestionsFrame(CTk.CTkTabview):
         if self.owner_state:
             self.fuelType_frame.pack(side=CTk.TOP, fill=CTk.X)
             self.fuelUsage_frame.pack(side=CTk.TOP, fill=CTk.X)
+            self.ownership_nextBtn.configure(state=(CTk.DISABLED if L is None else CTk.NORMAL))
 
         else:
             self.fuelType_frame.pack_forget()
             self.fuelUsage_frame.pack_forget()
+            self.ownership_nextBtn.configure(state=CTk.NORMAL)
 
     def tab_results(self):
         parent = self.add(TABS[3])
@@ -280,18 +296,19 @@ class QuestionsFrame(CTk.CTkTabview):
 
     def validate_entry(self, event, entry: CTk.CTkEntry, button: CTk.CTkButton, command = None):
         value = event.char
-        if not value.isdigit() and value != "\x0D":
-            button.configure(state=CTk.DISABLED)
-        elif entry.get().isdigit() and command is not None:
-            command()
-        elif entry.get().isdigit():
-            button.configure(state=CTk.NORMAL)
-        else:
-            button.configure(state=CTk.DISABLED)
-
-        if command is None:
-            return
+        try:
+            float(entry.get())
+            isFloat = True
+        except ValueError:
+            isFloat = False
         
+        if value.isalpha() and value != "\x0D":
+            button.configure(state=CTk.DISABLED)
+        elif isFloat and command is not None:
+            command()
+        elif isFloat:
+            button.configure(require_redraw = True, state = CTk.NORMAL)
+        else: button.configure(state=CTk.DISABLED)
 
 class CommuteQuestionFrame(CTk.CTkFrame):
     def __init__(self, master, **kwargs):

@@ -1,0 +1,53 @@
+{
+    "Motorcycle": {
+      "KgCO2perKm": 0.1174424,
+      "KmperL": 30,
+      "defaultFuel": 2.556
+    },
+    "Tricycle": {
+      "KgCO2perKm": 0.1174424,
+      "KmperL": 20,
+      "defaultFuel": 2.556
+    },
+    "Jeepney": {
+      "KgCO2perKm": 0.2883241,
+      "KmperL": 6,
+      "defaultFuel": 2.175
+    },
+    "Taxi": {
+      "KgCO2perKm": 0.2118934,
+      "KmperL": 10,
+      "defaultFuel": 2.175
+    },
+    "Car-Hatchback": {
+      "KgCO2perKm": 0.2118934,
+      "KmperL": 17,
+      "defaultFuel": 2.556
+    },
+    "Car-Sedan": {
+      "KgCO2perKm": 0.2118934,
+      "KmperL": 15,
+      "defaultFuel": 2.556
+    },
+    "Car-SUV": {
+      "KgCO2perKm": 0.2118934,
+      "KmperL": 10,
+      "defaultFuel": 2.556
+    },
+    "Pick-up": {
+      "KgCO2perKm": 0.2883241,
+      "KmperL": 9,
+      "defaultFuel": 2.556
+    },
+    "Bus": {
+      "KgCO2perKm": 0.2883241,
+      "KmperL": 4,
+      "defaultFuel": 2.175
+    },
+    "Van": {
+      "KgCO2perKm": 0.2883241,
+      "KmperL": 12,
+      "defaultFuel": 2.556
+    }
+  }
+  
