@@ -1,20 +1,28 @@
 import os
-from typing import Optional, Tuple, Union
 import customtkinter as CTk
 import math
 from PIL import Image
+import matplotlib.pyplot as plt
+
+from utilities.calculations import CarbonFootprint
+from introduction import intro
 
 APPNAME: str = "Carbon Footprint Calculator"
-CURRENTDIRECTORY = os.path.dirname(os.path.abspath(__file__))
-MODE = CTk.get_appearance_mode()
-DELETEICON = CTk.CTkImage(Image.open(f"{CURRENTDIRECTORY}/icons/{MODE}Delete.png"))
-EDITICON = CTk.CTkImage(Image.open(f"{CURRENTDIRECTORY}/icons/{MODE}Edit.png"))
-ENTER_KEY = "<Return>"
-KEY_PRESS = '<KeyPress>'
+CURRENTDIRECTORY:str = os.path.dirname(os.path.abspath(__file__))
+MODE: str = CTk.get_appearance_mode()
+DELETEICON:CTk.CTkImage = CTk.CTkImage(Image.open(f"{CURRENTDIRECTORY}/icons/{MODE}Delete.png"))
+EDITICON:CTk.CTkImage = CTk.CTkImage(Image.open(f"{CURRENTDIRECTORY}/icons/{MODE}Edit.png"))
+BACKGROUND: CTk.CTkImage = CTk.CTkImage(Image.open(f"{CURRENTDIRECTORY}/icons/background.jpg"))
 
-TABS = ["Commute", "Vehicle", "Ownership", "Results"]
-KM = None
-L = None
+ENTER_KEY:str = "<Return>"
+KEY_PRESS:str = '<KeyPress>'
+
+TABS:list = ["Commute", "Vehicle", "Ownership", "Results"]
+KM: int | None = None
+L: int | None = None
+FREQUENCY: float = 7
+FUELTYPE: str | None = None
+VEHICLE: str
 
 class CarbonFootprintCalculator(CTk.CTk):
     def __init__(self):
@@ -23,14 +31,17 @@ class CarbonFootprintCalculator(CTk.CTk):
         self.setup_widgets()
 
     def setup_main_window(self):
+        global BACKGROUND
+        self.background_label = CTk.CTkLabel(self, text='', image=BACKGROUND, width = 800, height = 600)
+        self.background_label.place(x=0, y=0, relwidth = 1, relheight = 1)
         self.title(APPNAME)
         self.setup_main_window_sizes()
         self.setup_grids()
         CTk.set_appearance_mode("Dark")
 
     def setup_main_window_sizes(self):
-        width = 1020
-        height = 720
+        width = 800
+        height = 600
         screen_width = self.winfo_screenwidth()
         screen_height = self.winfo_screenheight()
         x = math.floor((screen_width - width) / 2)
@@ -42,32 +53,31 @@ class CarbonFootprintCalculator(CTk.CTk):
     def setup_grids(self):
         self.grid_rowconfigure(0)
         self.grid_rowconfigure(1)
-        self.columnconfigure(0, weight=0, minsize=50)
-        self.columnconfigure(1, weight=0, minsize=750)
+        self.columnconfigure(0, weight=0, minsize=800)
 
     def setup_widgets(self):
-        self.CommuteDetailsFrame = CommuteDetailsFrame(
-            master=self,
-            corner_radius=15,
-            border_color=("#0000FF", "#00FF00"),
-            border_width=2,
-        )
-        self.CommuteDetailsFrame.grid(
-            row=1, column=0, sticky="nsew", padx=13, pady=(18, 0)
-        )
-        self.commuteScrollable = Scrollable(self.CommuteDetailsFrame)
-        self.commuteScrollable.grid(row=0, column=0, padx=5, pady=5, sticky="nsew")
-        self.commutes = []
-
+        # self.CommuteDetailsFrame = CommuteDetailsFrame(
+        #     master=self,
+        #     corner_radius=15,
+        #     border_color=("#0000FF", "#00FF00"),
+        #     border_width=2,
+        # )
+        # self.CommuteDetailsFrame.grid(
+        #     row=1, column=0, sticky="nsew", padx=13, pady=(18, 0)
+        # )
+        # self.commuteScrollable = Scrollable(self.CommuteDetailsFrame)
+        # self.commuteScrollable.grid(row=0, column=0, padx=5, pady=5, sticky="nsew")
+        # self.commutes = []
+        # self.btn_add_commute = CTk.CTkButton(
+        #     master=self, command=self.add_commute, text="Add"
+        # )
+        # self.btn_add_commute.grid(row=0, column=0, pady=(13, 0))
         self.btn_change_theme = CTk.CTkButton(
             master=self, command=self.change_theme, text="Change Theme"
         )
-        self.btn_change_theme.grid(row=0, column=1, pady=(13, 0))
+        self.btn_change_theme.grid(row=0, column=0, pady=(13, 0))
 
-        self.btn_add_commute = CTk.CTkButton(
-            master=self, command=self.add_commute, text="Add"
-        )
-        self.btn_add_commute.grid(row=0, column=0, pady=(13, 0))
+        
 
         self.QuestionsFrame = QuestionsFrame(
             master=self,
@@ -77,7 +87,7 @@ class CarbonFootprintCalculator(CTk.CTk):
             border_width=2,
             command=self.tab_handler,
         )
-        self.QuestionsFrame.grid(row=1, column=1, sticky="nsew")
+        self.QuestionsFrame.grid(row=1, column=0, sticky="nsew",padx = 50)
 
     def change_theme(self):
         global MODE
@@ -293,6 +303,39 @@ class QuestionsFrame(CTk.CTkTabview):
     def tab_results(self):
         parent = self.add(TABS[3])
         self.set(TABS[3])
+        global KM
+        global L
+        global FREQUENCY
+        global VEHICLE
+        global FUELTYPE
+
+
+        KM = int(self.commute_entry.get())
+        FREQUENCY = int(self.commute_entry_days.get())
+        VEHICLE = self.vehicle_option_menu.get()
+        FUELTYPE = self.fuel_type_option_menu.get() if self.ownership_option_menu.get() == "Yes" else None
+        L = self.fuel_usage_entry.get() if self.ownership_option_menu.get() == "Yes" else None
+
+        self.carbonFootprint = CarbonFootprint(KM, VEHICLE, L, FREQUENCY, FUELTYPE)
+        print(self.carbonFootprint.get_weekly_emission())
+        print(self.carbonFootprint.get_monthly_emission())
+        print(self.carbonFootprint.get_yearly_emission())
+        weekly_emission = self.carbonFootprint.get_weekly_emission()
+        monthly_emission = self.carbonFootprint.get_monthly_emission()
+        yearly_emission = self.carbonFootprint.get_yearly_emission()
+
+        # Create the data for the bar graph
+        emission_types = ['Weekly', 'Monthly', 'Yearly']
+        emission_values = [weekly_emission, monthly_emission, yearly_emission]
+
+        # Create the bar graph
+        plt.bar(emission_types, emission_values)
+        plt.xlabel('Emission Period')
+        plt.ylabel('Emission Amount')
+        plt.title('Carbon Footprint Emissions')
+
+        # Display the graph
+        plt.show()
 
     def validate_entry(self, event, entry: CTk.CTkEntry, button: CTk.CTkButton, command = None):
         value = event.char
@@ -314,6 +357,6 @@ class CommuteQuestionFrame(CTk.CTkFrame):
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs)
 
-
+intro()
 app = CarbonFootprintCalculator()
 app.mainloop()
