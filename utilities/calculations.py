@@ -2,8 +2,6 @@ import json
 
 with open("data.json", "r") as file:
     VEHICLES = json.load(file)
-print(VEHICLES)
-
 
 class CarbonFootprint:
     def __init__(
@@ -24,10 +22,7 @@ class CarbonFootprint:
 
     def get_weekly_emission(self):
         Lperweek = (self.fuel if self.fuel is not None else (self.distance * (1 / self.vehicle["KmperL"])))
-        print(self.fuel)
-        print(self.distance)
-        print(self.vehicle["KmperL"])
-        print((self.distance * (1 / self.vehicle["KmperL"])))
+        
         KgCO2perL = Lperweek * (
             self.vehicle["defaultFuel"] if self.fuelType is None else self.fuelType
         )
