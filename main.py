@@ -1,18 +1,28 @@
 import os
 import customtkinter as CTk
+import tkinter as tk
 import math
-from PIL import Image
+import pandas as pd
 import matplotlib.pyplot as plt
 
+from PIL import Image, ImageTk
+
+from transparent import TransparentFrame
 from utilities.calculations import CarbonFootprint
 from introduction import intro
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+
 
 APPNAME: str = "Carbon Footprint Calculator"
 CURRENTDIRECTORY:str = os.path.dirname(os.path.abspath(__file__))
 MODE: str = CTk.get_appearance_mode()
 DELETEICON:CTk.CTkImage = CTk.CTkImage(Image.open(f"{CURRENTDIRECTORY}/icons/{MODE}Delete.png"))
 EDITICON:CTk.CTkImage = CTk.CTkImage(Image.open(f"{CURRENTDIRECTORY}/icons/{MODE}Edit.png"))
-BACKGROUND: CTk.CTkImage = CTk.CTkImage(Image.open(f"{CURRENTDIRECTORY}/icons/background.jpg"))
+
+WHITE: str = "white"
+BLACK: str = "black"
+BACKGROUND_COLOR: str = BLACK
+FOREGROUND_COLOR: str = BLACK
 
 ENTER_KEY:str = "<Return>"
 KEY_PRESS:str = '<KeyPress>'
@@ -31,13 +41,25 @@ class CarbonFootprintCalculator(CTk.CTk):
         self.setup_widgets()
 
     def setup_main_window(self):
-        global BACKGROUND
-        self.background_label = CTk.CTkLabel(self, text='', image=BACKGROUND, width = 800, height = 600)
-        self.background_label.place(x=0, y=0, relwidth = 1, relheight = 1)
+        self.background_image = Image.open("icons/background.jpg")
+        self.background = ImageTk.PhotoImage(self.background_image)
+        self.background_label = tk.Label(self, image=self.background)
+        self.background_label.place(in_=self, x=0, y=0, relwidth=1, relheight=1)
         self.title(APPNAME)
+
+        self.transparentFrame = TransparentFrame(self)
+        self.transparentFrame.wm_attributes('-transparentcolor', BLACK)
+        self.transparentFrame.lift()
+
         self.setup_main_window_sizes()
         self.setup_grids()
-        CTk.set_appearance_mode("Dark")
+        CTk.set_appearance_mode("Light")
+
+        self.bind("<Configure>", self.on_configure)
+
+    def on_configure(self, event):
+        self.transparentFrame.geometry(f'800x550+{self.winfo_rootx()}+{self.winfo_rooty()}')
+        self.transparentFrame.lift()
 
     def setup_main_window_sizes(self):
         width = 800
@@ -52,68 +74,23 @@ class CarbonFootprintCalculator(CTk.CTk):
 
     def setup_grids(self):
         self.grid_rowconfigure(0)
-        self.grid_rowconfigure(1)
         self.columnconfigure(0, weight=0, minsize=800)
 
     def setup_widgets(self):
-        # self.CommuteDetailsFrame = CommuteDetailsFrame(
-        #     master=self,
-        #     corner_radius=15,
-        #     border_color=("#0000FF", "#00FF00"),
-        #     border_width=2,
-        # )
-        # self.CommuteDetailsFrame.grid(
-        #     row=1, column=0, sticky="nsew", padx=13, pady=(18, 0)
-        # )
-        # self.commuteScrollable = Scrollable(self.CommuteDetailsFrame)
-        # self.commuteScrollable.grid(row=0, column=0, padx=5, pady=5, sticky="nsew")
-        # self.commutes = []
-        # self.btn_add_commute = CTk.CTkButton(
-        #     master=self, command=self.add_commute, text="Add"
-        # )
-        # self.btn_add_commute.grid(row=0, column=0, pady=(13, 0))
-        self.btn_change_theme = CTk.CTkButton(
-            master=self, command=self.change_theme, text="Change Theme"
-        )
-        self.btn_change_theme.grid(row=0, column=0, pady=(13, 0))
-
-        
-
         self.QuestionsFrame = QuestionsFrame(
-            master=self,
+            master=self.transparentFrame,
+            width = 700,
+            height = 500,
             depth=0,
             corner_radius=15,
-            border_color=("#0000FF", "#00FF00"),
+            border_color=BLACK,
             border_width=2,
             command=self.tab_handler,
-        )
-        self.QuestionsFrame.grid(row=1, column=0, sticky="nsew",padx = 50)
-
-    def change_theme(self):
-        global MODE
-        if MODE == "Dark":
-            CTk.set_appearance_mode("Light")
-            MODE = "Light"
-            self.update_icons()
-            return
-        CTk.set_appearance_mode("Dark")
-        MODE = "Dark"
-        self.update_icons()
-
-    def update_icons(self):
-        global DELETEICON
-        DELETEICON = CTk.CTkImage(
-            Image.open(f"{CURRENTDIRECTORY}/icons/{MODE}Delete.png")
+            bg_color=BLACK,
+            fg_color=BLACK
         )
 
-        commute: Commute
-        for commute in self.commutes:
-            commute.delete_btn.configure(require_redraw=True, image=DELETEICON)
-
-    def add_commute(self):
-        commute = Commute(self.commuteScrollable, "Home", 5, fg_color="transparent")
-        commute.pack(anchor="w", padx=(1, 0), pady=1, fill="both")
-        self.commutes.append(commute)
+        self.QuestionsFrame.grid(row=0, column=0, sticky="nsew",padx = 50,pady=(30,0))
 
     def tab_handler(self):
         selected = self.QuestionsFrame.get()
@@ -125,51 +102,13 @@ class CarbonFootprintCalculator(CTk.CTk):
         except ValueError:
             pass
 
-class Scrollable(CTk.CTkScrollableFrame):
-    def __init__(self, master, **kwargs):
-        super().__init__(master, **kwargs)
-
-
-class CommuteDetailsFrame(CTk.CTkFrame):
-    def __init__(self, master, **kwargs):
-        super().__init__(master, **kwargs)
-
-
-class Commute(CTk.CTkFrame):
-    def __init__(self, master, Type, Km, **kwargs):
-        super().__init__(master, **kwargs)
-        self.type = Type
-        self.value = Km
-        self.label()
-        self.delete_button()
-        self.columnconfigure(0, weight=0, minsize=150)
-        self.columnconfigure(1, weight=0)
-
-    def label(self):
-        self.label = CTk.CTkLabel(
-            self, text=f"{self.type}: {self.value}Km", bg_color="transparent"
-        )
-        self.label.grid(row=0, column=0, sticky="w")
-
-    def delete_button(self):
-        self.delete_btn = CTk.CTkButton(
-            self,
-            text="",
-            image=DELETEICON,
-            width=25,
-            fg_color="transparent",
-            border_width=0,
-            command=self.destroy,
-        )
-        self.delete_btn.grid(row=0, column=1, sticky="e")
-
-
 class QuestionsFrame(CTk.CTkTabview):
     def __init__(self, master, depth, **kwargs):
         super().__init__(master, **kwargs)
         self.depth = depth
-        self.font = CTk.CTkFont(family="Helvetica", size=20)
+        self.font = CTk.CTkFont(family="Helvetica", size=25)
         self.setup_tabs()
+        self.tabs = self.winfo_children()
 
     def setup_tabs(self):
         self.tab_commute()
@@ -177,14 +116,14 @@ class QuestionsFrame(CTk.CTkTabview):
     def tab_commute(self):
         parent = self.add(TABS[0])
         self.set(TABS[0])
-        self.commute_frame = CTk.CTkFrame(master=parent, fg_color="transparent", bg_color="transparent")
+        self.commute_frame = CTk.CTkFrame(master=parent, fg_color=FOREGROUND_COLOR, bg_color=BACKGROUND_COLOR)
         self.commute_frame.pack(side=CTk.TOP, pady=20, fill=CTk.X)
         self.commute_label = CTk.CTkLabel(master=self.commute_frame, text="How far (in Km) is your daily commute?", font=self.font)
         self.commute_label.pack(side=CTk.LEFT)
         self.commute_entry = CTk.CTkEntry(master=self.commute_frame)
         self.commute_entry.pack(side=CTk.RIGHT)
 
-        self.commute_frame_days = CTk.CTkFrame(parent, fg_color="transparent", bg_color="transparent")
+        self.commute_frame_days = CTk.CTkFrame(parent, fg_color=FOREGROUND_COLOR, bg_color=BACKGROUND_COLOR)
         self.commute_frame_days.pack(side=CTk.TOP, pady=20, fill=CTk.X)
         self.commute_label_days = CTk.CTkLabel(self.commute_frame_days, text="How often (in days) do you commute?", font=self.font)
         self.commute_label_days.pack(side=CTk.LEFT)
@@ -234,13 +173,13 @@ class QuestionsFrame(CTk.CTkTabview):
         self.set(TABS[2])
         question = f"Do you own the {self.vehicle}?"
         self.ownership_frame = CTk.CTkFrame(
-            parent, bg_color="transparent", fg_color="transparent"
+            parent, bg_color=BACKGROUND_COLOR, fg_color=FOREGROUND_COLOR
         )
         self.fuelType_frame = CTk.CTkFrame(
-            parent, bg_color="transparent", fg_color="transparent"
+            parent, bg_color=BACKGROUND_COLOR, fg_color=FOREGROUND_COLOR
         )
         self.fuelUsage_frame = CTk.CTkFrame(
-            parent, bg_color="transparent", fg_color="transparent"
+            parent, bg_color=BACKGROUND_COLOR, fg_color=FOREGROUND_COLOR
         )
         self.ownership_frame.pack(side=CTk.TOP, fill=CTk.X)
 
@@ -265,7 +204,9 @@ class QuestionsFrame(CTk.CTkTabview):
         self.fuel_usage_label = CTk.CTkLabel(
             master=self.fuelUsage_frame,
             font=self.font,
-            text=f"Approximately how many liters of fuel do you use in a week?",
+            text=f"Approximately how many liters of fuel \ndo you use in a week?",
+            justify=CTk.LEFT,
+            width=400,
         )
         self.fuel_usage_entry = CTk.CTkEntry(master=self.fuelUsage_frame, placeholder_text="type 0 if unsure")
 
@@ -309,12 +250,13 @@ class QuestionsFrame(CTk.CTkTabview):
         global VEHICLE
         global FUELTYPE
 
-
+        isOwned = self.ownership_option_menu.get()
+        hasLiters = self.fuel_usage_entry.get()
         KM = int(self.commute_entry.get())
         FREQUENCY = int(self.commute_entry_days.get())
         VEHICLE = self.vehicle_option_menu.get()
-        FUELTYPE = self.fuel_type_option_menu.get() if self.ownership_option_menu.get() == "Yes" else None
-        L = self.fuel_usage_entry.get() if self.ownership_option_menu.get() == "Yes" else None
+        FUELTYPE = self.fuel_type_option_menu.get() if isOwned == "Yes" else None
+        L = None if isOwned == "No" else int(hasLiters) if hasLiters else None
 
         self.carbonFootprint = CarbonFootprint(KM, VEHICLE, L, FREQUENCY, FUELTYPE)
         print(self.carbonFootprint.get_weekly_emission())
@@ -328,14 +270,25 @@ class QuestionsFrame(CTk.CTkTabview):
         emission_types = ['Weekly', 'Monthly', 'Yearly']
         emission_values = [weekly_emission, monthly_emission, yearly_emission]
 
-        # Create the bar graph
-        plt.bar(emission_types, emission_values)
-        plt.xlabel('Emission Period')
-        plt.ylabel('Emission Amount')
-        plt.title('Carbon Footprint Emissions')
+        value = {'Emission Period': emission_types, 'Emission Amount': emission_values}
+        data = pd.DataFrame(value)
 
-        # Display the graph
-        plt.show()
+        self.figure = plt.Figure(figsize=(6,3))
+        self.axes = self.figure.add_subplot(111)
+
+        data.plot.bar(x='Emission Period', y='Emission Amount', ax=self.axes,edgecolor='black', color="#FF0000")
+        self.axes.set_xticklabels(self.axes.get_xticklabels(), rotation=10)
+
+        for rectangle in self.axes.patches:
+            x = rectangle.get_x() + rectangle.get_width() / 2
+            y = rectangle.get_height() / 2  
+            count_value = int(rectangle.get_height())  
+            self.axes.text(x, y, count_value, ha='center', va='center',color=WHITE)
+        self.canvas = FigureCanvasTkAgg(self.figure, master=parent)
+        self.canvas.draw()
+        self.canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=False) 
+        # self.canvas.get_tk_widget().grid(row=0,column=0,padx=20,pady=20)
+
 
     def validate_entry(self, event, entry: CTk.CTkEntry, button: CTk.CTkButton, command = None):
         value = event.char
@@ -352,11 +305,6 @@ class QuestionsFrame(CTk.CTkTabview):
         elif isFloat:
             button.configure(require_redraw = True, state = CTk.NORMAL)
         else: button.configure(state=CTk.DISABLED)
-
-class CommuteQuestionFrame(CTk.CTkFrame):
-    def __init__(self, master, **kwargs):
-        super().__init__(master, **kwargs)
-
 intro()
 app = CarbonFootprintCalculator()
 app.mainloop()
