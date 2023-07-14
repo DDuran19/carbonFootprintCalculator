@@ -3,3 +3,4 @@ customtkinter
 pywebview
 pandas
 matplotlib
+pyinstaller
