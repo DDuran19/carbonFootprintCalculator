@@ -1,0 +1,47 @@
+body, html {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+#video-container {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+video {
+    width: 100%;
+    height: 100%;
+    object-fit: fill;
+}
+
+.start {
+    color: aliceblue;
+    position: absolute;
+    top: 90%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 9999;
+    font-size: 24px;
+    text-align: center;
+}
+
+.hidden {
+    display: none;
+}
+
+.visible {
+    visibility: visible;
+    transition: visibility 0s linear 0s;
+}
+
+.hidden .text-hidden {
+    visibility: hidden;
+}
+
+.hidden .text-visible {
+    visibility: visible;
+    transition: visibility 0s linear 0.5s;
+}

@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Intro Video</title>
+    <link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+    <div id="video-container">
+        <video id="intro-video" autoplay>
+            <source src="intro.mp4" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+    </div>
+<h1>L:SAdasdasd</h1>
+    <div class="start hidden">
+        <span class="text-visible">Close this to start app</span>
+    </div>
+
+    <script>
+        setTimeout(function() {
+            var startContainer = document.querySelector('.start');
+            startContainer.classList.remove('hidden');
+            startContainer.classList.add('visible');
+        }, 20000); // 20 seconds delay
+    </script>
+</body>
+</html>

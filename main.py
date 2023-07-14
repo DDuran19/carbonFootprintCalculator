@@ -1,4 +1,4 @@
-import os
+import os, subprocess
 import customtkinter as CTk
 import tkinter as tk
 import math
@@ -11,7 +11,7 @@ from tkinter import ttk
 from transparent import TransparentFrame
 from utilities.calculations import CarbonFootprint
 from utilities.results import CircularProgressBar
-from introduction import intro
+from utilities.links import Links
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from data.dataProcessor import DataProcessor
 
@@ -400,8 +400,12 @@ class QuestionsFrame(CTk.CTkTabview):
             width=195,
             wraplength=200
         )
+        
+        label = CTk.CTkLabel(top_level, text="Check out these resources to learn more!", font=("Helvetica", 12, "bold"))
+        label.place(x=20,y=190)
         rating_label.place(x=200, y=70)
-
+        self.links = Links(top_level,fg_color=WHITE,bg_color=WHITE,width=400, height=400)
+        self.links.place(x=0,y=210)
 
 
     def generate_hex_color(self, value):
@@ -417,7 +421,7 @@ class QuestionsFrame(CTk.CTkTabview):
 
         return hex_color
 
-    def generate_rating(self, percentage, responseOnly=False):
+    def generate_rating(self, percentage):
         if percentage > 80:
             rating = "VERY BAD"
             response = "Your carbon footprint emission is very high. It is crucial to take immediate action to reduce your emissions and adopt more sustainable practices."
@@ -460,7 +464,6 @@ class QuestionsFrame(CTk.CTkTabview):
         else:
             button.configure(state=CTk.DISABLED)
 
-
-intro()
+subprocess.run(["python", "./assets/introduction.py"])
 app = CarbonFootprintCalculator()
 app.mainloop()
