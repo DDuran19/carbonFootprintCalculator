@@ -1,0 +1,78 @@
+Transpo: https://philjournalsci.dost.gov.ph/113-vol-151-no-3-june-2022/1607-greenhouse-gas-emissions-inventory-of-a-university-in-the-philippines-the-case-of-up-cebu
+    Distance:  KgCO2 /Km
+    Motorcycle	0.1174424
+    Tricycle	0.1174424
+    Jeepney	0.2883241
+    Taxi	0.2118934
+    Car-Hatchback	0.2118934
+    Car-Sedan	0.2118934
+    Car-SUV	0.2118934
+    Pick-up	0.2883241
+    Bus	0.2883241
+    Van	0.2883241
+
+    Fuel Consumption: KgCO2 /L
+        Gasoline	2.175
+        Diesel  2.556
+
+fuel_efficiency = {
+    "Motorcycle": 30.0,
+    "Tricycle": 20.0,
+    "Jeepney": 6.0,
+    "Taxi": 10.0,
+    "Car-Hatchback": 17.0,
+    "Car-Sedan": 15.0,
+    "Car-SUV": 10.0,
+    "Pick-up": 9.0,
+    "Bus": 4.0,
+    "Van": 12.0
+}
+background image: https://www.peakpx.com/136693/white-cloud-and-high-rise-buildings
+intro video: https://www.youtube.com/watch?v=Heqd7IH7ZTA
+worldEmissionData: https://www.worldometers.info/co2-emissions/co2-emissions-per-capita/
+Vehicle	Average Fuel Efficiency (Km/L)
+Motorcycle	25 - 40
+Tricycle	15 - 25
+Jeepney	4 - 8
+Taxi	8 - 12
+Car-Hatchback	15 - 20
+Car-Sedan	12 - 18
+Car-SUV	8 - 15
+Pick-up	8 - 12
+Bus	2 - 6
+Van	10 - 15
+LPG: https://www.autolexicon.net/en/articles/vypocet-emisi-co2/
+
+Calculation of CO2 emissions for LPG fuel:
+1 litre of LPG weighs 550 grams, contains 82.5% carbon, which corresponds to 454 grams of carbon in each litre of LPG. It takes 1211 grams of oxygen to burn 1 litre of LPG. The carbon dioxide produced is therefore equal to the sum of 454 grams of carbon and 1211 grams of oxygen. That is 1665 grams of CO2 from one litre of LPG burnt.
+
+Example:
+with an average consumption of 5 litres per 100 km, the CO2 emissions
+5/100 x 1665 = 83 grams of CO2 per travelled kilometre
+
+prompts:
+
+I need a object-oriented version widget in tkinter
+widget should ask the user for the following. the questions ONLY APPEARS after the preceeding question has been asked.
+
+title: "Let us compute your Transportation Carbon Footprint!"
+
+1. How far (in Km) is your daily commute? <should have this label AND a number input>
+2. Which of the following vehicles are you using? <should have a dropdown>
+    Motorcycle
+    Tricycle
+    Jeepney
+    Taxi
+    Car-Hatchback
+    Car-Sedan
+    Car-SUV
+    Pick-up
+    Bus
+    Van
+3. Do you own the /*whatever was chosen in question 2*/? <should have a yes/no dropdown>
+    if yes:
+        3.1 What type of fuel are you using? <should have a dropdown>
+            Gasoline
+            Diesel
+        3.2 Approximately how many liters of /*whatever was chosen in question 3.1*/ do you use in a day? <should have this label AND a number input>
+    

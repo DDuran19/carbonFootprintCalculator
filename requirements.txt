@@ -1,0 +1,5 @@
+Pillow
+customtkinter
+pywebview
+pandas
+matplotlib

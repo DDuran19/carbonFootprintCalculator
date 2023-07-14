@@ -464,6 +464,6 @@ class QuestionsFrame(CTk.CTkTabview):
         else:
             button.configure(state=CTk.DISABLED)
 
-subprocess.run(["python", "./assets/introduction.py"])
+subprocess.run(["python", "./assets/introduction.py"], creationflags=subprocess.CREATE_NO_WINDOW)
 app = CarbonFootprintCalculator()
 app.mainloop()

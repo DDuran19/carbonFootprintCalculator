@@ -1,8 +1,10 @@
 __pycache__
-sources
 test_images
 website
 test.py
 transport.py
 test2.py
 intro.mp4
+build
+dist
+main.spec

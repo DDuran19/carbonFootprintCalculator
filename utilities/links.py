@@ -22,7 +22,7 @@ class Thumbnail(ttk.Frame):
         self.description_label.pack(side=tk.RIGHT)
 
     def open_webview(self):
-        subprocess.run(["python", "assets/webViewer.py", self.url])
+        subprocess.run(["python", "assets/webViewer.py", self.url], creationflags=subprocess.CREATE_NO_WINDOW)
 
 class Links(CTk.CTkScrollableFrame):
 
