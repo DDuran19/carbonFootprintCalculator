@@ -4,7 +4,6 @@ website
 test.py
 transport.py
 test2.py
-intro.mp4
 build
 dist
 main.spec
