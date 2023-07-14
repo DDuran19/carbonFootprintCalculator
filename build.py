@@ -30,9 +30,6 @@ a = Analysis(
     win_private_assemblies=False,
     cipher=block_cipher,
     noarchive=False,
-    pyinstaller_options=[
-        '--noconfirm',
-    ],
 )
 pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
 
@@ -47,6 +44,7 @@ exe = EXE(
     strip=False,
     upx=True,
     console=False,
+    confirm=True,
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,
@@ -70,14 +68,18 @@ with open("main.spec", "w") as file:
     file.write(main_spec)
 
 # Run PyInstaller command with the customtkinter path
-subprocess.run(["pyinstaller", "main.spec"])
+subprocess.run(["pyinstaller", "--noconfirm", "main.spec"])
 destination_folder = './dist/main'
 
 # Ensure the destination folder exists
 os.makedirs(destination_folder, exist_ok=True)
 
 # Copy the files and directories
-shutil.copytree(assets_path, os.path.join(destination_folder, 'assets'))
-shutil.copytree(data_path, os.path.join(destination_folder, 'data'))
-shutil.copy(data_json_file, os.path.join(destination_folder, 'data.json'))
-shutil.copytree(icons_path, os.path.join(destination_folder, 'icons'))
+try:
+    shutil.copytree(assets_path, os.path.join(destination_folder, 'assets'), dirs_exist_ok=True)
+    shutil.copytree(data_path, os.path.join(destination_folder, 'data'), dirs_exist_ok=True)
+    shutil.copy(data_json_file, os.path.join(destination_folder, 'data.json'))
+    shutil.copytree(icons_path, os.path.join(destination_folder, 'icons'), dirs_exist_ok=True)
+except FileExistsError:
+    print('file exists')
+
