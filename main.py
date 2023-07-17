@@ -14,7 +14,7 @@ from utilities.results import CircularProgressBar
 from utilities.links import Links
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from data.dataProcessor import DataProcessor
-
+from App import App
 
 APPNAME: str = "Carbon Footprint Calculator"
 CURRENTDIRECTORY: str = os.path.dirname(os.path.abspath(__file__))
@@ -43,6 +43,51 @@ VEHICLE: str
 
 
 class CarbonFootprintCalculator(CTk.CTk):
+    """
+    This class represents the main application window for the Carbon Footprint Calculator.
+
+init(): Initializes the CarbonFootprintCalculator class by calling the superclass constructor and setting up the main window. It also sets up the widgets for the application.
+
+setup_main_window(): Sets up the main window of the application by creating a background image, transparent frame, and configuring the window size and appearance.
+
+on_configure(event): Callback function that is triggered when the window is resized. It adjusts the position and size of the transparent frame to match the main window.
+
+setup_main_window_sizes(): Sets up the size and position of the main window based on the screen dimensions.
+
+setup_grids(): Configures the grid layout of the main window.
+
+setup_widgets(): Sets up the widgets within the main window, including the QuestionsFrame.
+
+tab_handler(): Handles the tab switching logic when a tab is selected in the QuestionsFrame.
+
+QuestionsFrame: This class represents the frame that contains the different tabs for the questions in the application.
+
+init(master, **kwargs): Initializes the QuestionsFrame class by calling the superclass constructor and setting up the tabs and their respective widgets.
+
+setup_tabs(): Sets up the different tabs in the QuestionsFrame.
+
+tab_commute(): Sets up the "Commute" tab, which includes the widgets for entering the daily commute distance and commute frequency.
+
+tab_vehicle(): Sets up the "Vehicle" tab, which includes the widget for selecting the type of vehicle.
+
+tab_vehicle_select(chosen): Callback function that is triggered when a vehicle is selected in the dropdown menu. It sets the selected vehicle and proceeds to the next tab.
+
+tab_ownership(): Sets up the "Ownership" tab, which includes the widgets for selecting ownership status and fuel type.
+
+toggle_fuel_options(select): Callback function that is triggered when the ownership dropdown value is changed. It shows or hides the fuel usage input and label based on the ownership status.
+
+tab_results(): Sets up the "Results" tab, which includes the carbon footprint results and a bar chart comparing the user's emissions to other countries.
+
+tips(percentage, parent): Displays the carbon footprint results in a separate top-level window, including a circular progress bar, rating, and resource links.
+
+generate_hex_color(value): Generates a hexadecimal color code based on a given value, which is used to determine the color of the circular progress bar.
+
+generate_rating(percentage): Generates a rating and response based on the user's carbon footprint percentage.
+
+validate_entry(event, entry, button, command=None): Validates the input in an entry field and enables or disables a button based on the input.
+
+
+    """
     def __init__(self):
         super().__init__()
         self.setup_main_window()
@@ -87,8 +132,9 @@ class CarbonFootprintCalculator(CTk.CTk):
         self.columnconfigure(0, weight=0, minsize=800)
 
     def setup_widgets(self):
-        self.QuestionsFrame = QuestionsFrame(
+        self.QuestionsFrame = App(
             master=self.transparentFrame,
+            TABS=TABS,
             width=700,
             height=500,
             border_color=TRANSPARENT,
