@@ -29,7 +29,7 @@
       "KmperL": 15,
       "defaultFuel": 2.556
     },
-    "Car-SUV": {
+    "SUV": {
       "KgCO2perKm": 0.2118934,
       "KmperL": 10,
       "defaultFuel": 2.556
