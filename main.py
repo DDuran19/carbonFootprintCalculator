@@ -6,10 +6,12 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import colorsys
 
+from typing import Callable
+from attr import dataclass
 from PIL import Image, ImageTk
 from tkinter import ttk
 from transparent import TransparentFrame
-from utilities.calculations import CarbonFootprint
+from utilities.calculations import CarbonFootprint, VEHICLES
 from utilities.results import CircularProgressBar
 from utilities.links import Links
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -34,12 +36,11 @@ FOREGROUND_COLOR: str = "black"
 ENTER_KEY: str = "<Return>"
 KEY_PRESS: str = "<KeyPress>"
 
-TABS: list = ["Commute", "Vehicle", "Ownership", "Results"]
-KM: int | None = None
-L: int | None = None
-FREQUENCY: float = 7
-FUELTYPE: str | None = None
-VEHICLE: str
+TABS: list = ["Commute", "Vehicle", "Results"]
+KM: int = 0
+L: int  = 0
+KGCO2perLperWeek: float = 0
+KGCO2perKmperWeek: float = 0
 
 
 class CarbonFootprintCalculator(CTk.CTk):
@@ -135,6 +136,7 @@ validate_entry(event, entry, button, command=None): Validates the input in an en
         self.QuestionsFrame = App(
             master=self.transparentFrame,
             TABS=TABS,
+            defaultcolor=TRANSPARENT,
             width=700,
             height=500,
             border_color=TRANSPARENT,
@@ -144,15 +146,26 @@ validate_entry(event, entry, button, command=None): Validates the input in an en
             fg_color=TRANSPARENT,
         )
 
-        self.QuestionsFrame.grid(row=0, column=0, sticky="nsew", padx=10, pady=(30, 0))
-
+        # self.QuestionsFrame.grid(row=0, column=0, sticky="nsew", padx=10, pady=(30, 0))
+        self.QuestionsFrame.pack(fill=CTk.X)
     def tab_handler(self):
         selected = self.QuestionsFrame.get()
         selected_index = TABS.index(selected)
+        
+        global KM
+        global L
+        global KGCO2perKmperWeek
+        global KGCO2perLperWeek
+        
         try:
             for index, value in enumerate(TABS):
                 if index > selected_index:
                     self.QuestionsFrame.delete(value)
+                    KM = 0
+                    L  = 0
+                    KGCO2perLperWeek = 0
+                    KGCO2perKmperWeek = 0
+                 
         except ValueError:
             pass
 
@@ -509,6 +522,320 @@ class QuestionsFrame(CTk.CTkTabview):
             button.configure(require_redraw=True, state=CTk.NORMAL)
         else:
             button.configure(state=CTk.DISABLED)
+
+
+class App(CTk.CTkTabview):
+    def __init__(self, master, TABS, defaultcolor, **kwargs):
+        super().__init__(master, **kwargs)
+        self.font = CTk.CTkFont(family="Helvetica", size=35)
+        self.tabNames=TABS
+        self.defaultColor = defaultcolor
+        self.setup_tabs()
+        self.tabs = self.winfo_children()
+
+    def setup_tabs(self):
+        self.setVehiclesFrame()
+
+    def setVehiclesFrame(self):
+        self.vehiclesFrame = self.add(self.tabNames[0])
+        self.vehicleHeader = CTk.CTkLabel(self.vehiclesFrame,
+            text="Which of the following vehicles do \nyou usually use on your commute?",
+            font=self.font)
+        # self.vehicleHeader.grid(row=0,column=1)
+        self.vehicleHeader.pack(side=CTk.TOP, fill=CTk.X, pady=(0,20))
+        self.vehicleBody = CTk.CTkFrame(self.vehiclesFrame,       
+            fg_color=self.defaultColor,
+            bg_color=self.defaultColor)
+        # self.vehicleBody.grid(row=1,column=1)
+        self.vehicleBody.pack(side=CTk.TOP, fill=CTk.X, padx=150)
+        self.vehicleBody.columnconfigure(1,minsize=300)
+        self.vehicleFooter = CTk.CTkFrame(self.vehiclesFrame,       
+            fg_color=self.defaultColor,
+            bg_color=self.defaultColor)
+        # self.vehicleFooter.grid(row=2,column=1)
+        self.vehicleFooter.pack(side=CTk.TOP, fill=CTk.X, padx=150)
+        self.setVehicleFooter()
+        self.setVehicleBody()
+    
+    def setVehicleBody(self):
+        
+        self.motorcycleChkVar = CTk.BooleanVar(value=False)
+        self.jeepneyChkVar = CTk.BooleanVar(value=False)
+        self.tricycleChkVar = CTk.BooleanVar(value=False)
+        self.busChkVar = CTk.BooleanVar(value=False)
+        self.taxiChkVar = CTk.BooleanVar(value=False)
+        self.SUVChkVar = CTk.BooleanVar(value=False)
+        self.vanChkVar = CTk.BooleanVar(value=False)  
+        
+        self.motorcycleChkBox = CTk.CTkCheckBox(self.vehicleBody,text="Motorcycle",font=self.font, variable=self.motorcycleChkVar, onvalue=True, offvalue=False)
+        self.jeepneyChkBox = CTk.CTkCheckBox(self.vehicleBody,text="Jeepney",font=self.font, variable=self.jeepneyChkVar, onvalue=True, offvalue=False)
+        self.tricycleChkBox = CTk.CTkCheckBox(self.vehicleBody,text="Tricycle",font=self.font, variable=self.tricycleChkVar, onvalue=True, offvalue=False)
+        self.busChkBox = CTk.CTkCheckBox(self.vehicleBody,text="Bus",font=self.font, variable=self.busChkVar, onvalue=True, offvalue=False)
+        self.taxiChkBox = CTk.CTkCheckBox(self.vehicleBody,text="Taxi",font=self.font, variable=self.taxiChkVar, onvalue=True, offvalue=False)
+        self.SUVChkBox = CTk.CTkCheckBox(self.vehicleBody,text="SUV",font=self.font, variable=self.SUVChkVar, onvalue=True, offvalue=False)
+        self.vanChkBox = CTk.CTkCheckBox(self.vehicleBody,text="Van ",font=self.font, variable=self.vanChkVar, onvalue=True, offvalue=False)
+
+        self.motorcycleChkBox.grid(row=1, column=1, pady=(0,20),sticky=CTk.W)
+        self.jeepneyChkBox.grid(row=2, column=1, pady=(0,20),sticky=CTk.W)
+        self.tricycleChkBox.grid(row=3, column=1, pady=(0,20),sticky=CTk.W)
+        self.busChkBox.grid(row=4, column=1, pady=(0,20),sticky=CTk.W)
+        self.taxiChkBox.grid(row=1, column=2, sticky=CTk.W)
+        self.SUVChkBox.grid(row=2, column=2, sticky=CTk.W)
+        self.vanChkBox.grid(row=3, column=2, sticky=CTk.W)
+            
+    def setVehicleFooter(self):
+        self.nextBtn = CTk.CTkButton(self.vehicleFooter,
+            text="Next",
+            command=self.submitVehicles)
+        self.nextBtn.pack(side=CTk.BOTTOM)
+    
+    def submitVehicles(self):
+        self.vehicles={
+            "Motorcycle": self.motorcycleChkVar.get(),
+            "Jeepney": self.jeepneyChkVar.get(),
+            "Tricycle": self.tricycleChkVar.get(),
+            "Bus": self.busChkVar.get(),
+            "Taxi": self.taxiChkVar.get(),
+            "SUV": self.SUVChkVar.get(),
+            "Van": self.vanChkVar.get()}
+        self.setTravelDetailsFrame()
+
+    def setTravelDetailsFrame(self):
+        self.travelFrame = self.add(self.tabNames[1])
+        self.set(self.tabNames[1])
+        self.actualTravelDetails = []
+        for k, v in self.vehicles.items():
+            if v:
+                frame = self.setVehicle(self.travelFrame, k)
+                self.actualTravelDetails.append(
+                    Vehicle(k, frame.days_var.get, frame.distance_var.get)
+                    )
+        self.nextBtn2 = CTk.CTkButton(self.travelFrame,
+            text="Next",
+            command=self.tab_results)
+        self.nextBtn2.pack(side=CTk.BOTTOM)
+
+    def setVehicle(self, travelFrame, vehicleName):
+        row = CTk.CTkFrame(travelFrame, border_color="black",border_width=2)
+        row.pack(pady=5)
+        
+        # Vehicle Name
+        vehicle_label = CTk.CTkLabel(row, text=vehicleName)
+        vehicle_label.grid(row=0, column=0, padx=5, pady=5, sticky=tk.W)
+        
+        # Days Dropdown
+        values=["1","2","3","4","5","6","7"]
+        row.days_var = CTk.IntVar(row,value=1)
+        days_dropdown = CTk.CTkOptionMenu(row, variable=row.days_var,values=values,  width=2)
+        days_dropdown.grid(row=0, column=1, padx=5, pady=5, sticky=tk.W)
+        
+        # Distance Entry
+        def validate_distance(text:str):
+            if text.isdigit() or text == "":
+                print('valid')
+                return True
+            else:
+                print("invalid")
+                return False
+        
+        row.distance_var = CTk.StringVar(row,value="")
+        distance_entry = tk.Entry(row, textvariable=row.distance_var, width=4, justify='right')
+        distance_entry['validate'] = 'key'
+        distance_entry['validatecommand'] = (distance_entry.register(validate_distance), '%P')
+        distance_entry.grid(row=0, column=2, padx=5, pady=5, sticky=tk.W)
+        row.columnconfigure(0,minsize=300)
+        return row
+
+
+
+    def tab_results(self):
+        parent = self.add(TABS[2])
+        self.set(TABS[2])
+        global KM
+        global L
+        global KGCO2perLperWeek
+        global KGCO2perKmperWeek
+
+        for vehicle in self.actualTravelDetails:
+            distance = int(vehicle.distance()) * int(vehicle.days())
+            fuelEfficiency = VEHICLES[vehicle.name]['KmperL'] 
+            fuelFactor = VEHICLES[vehicle.name]['defaultFuel'] 
+            vehicleFactor = VEHICLES[vehicle.name]['KgCO2perKm']
+            KM += distance
+            L += distance/fuelEfficiency
+            KGCO2perLperWeek+= fuelFactor * L
+            KGCO2perKmperWeek+= vehicleFactor * KM
+
+        self.carbonFootprint = CarbonFootprint(KM, L, KGCO2perLperWeek, KGCO2perKmperWeek )
+        weekly_emission = self.carbonFootprint.get_weekly_emission()
+        monthly_emission = self.carbonFootprint.get_monthly_emission()
+        yearly_emission = self.carbonFootprint.get_yearly_emission()
+
+        raw = DataProcessor()
+        data = raw.get_ranking(weekly_emission)
+
+        # Define colors for the bar chart
+        color_map = plt.get_cmap("Blues")
+        colors = [color_map(1 - (i / (len(data) - 1))) for i in range(len(data))]
+
+        # Set the color for "Your Footprint" to green
+        colors[data.index.get_loc("Your Footprint")] = "green"
+
+        self.figure = plt.Figure(figsize=(6, 3))
+        self.axes = self.figure.add_subplot(111)
+
+        bars = data.plot.bar(
+            x="Country", y="KgCO2perWeek", ax=self.axes, edgecolor="black", color=colors
+        )
+
+        # Set the font color for "Your Footprint" to red
+        bars.get_xticklabels()[data.index.get_loc("Your Footprint")].set_color("red")
+
+        self.axes.set_xticklabels(self.axes.get_xticklabels(), rotation=10)
+
+        # Add labels for the bar heights
+        for rectangle in self.axes.patches:
+            x = rectangle.get_x() + rectangle.get_width() / 2
+            y = rectangle.get_height() / 2
+            count_value = int(rectangle.get_height())
+            self.axes.text(
+                x,
+                y,
+                count_value,
+                ha="center",
+                va="center",
+                color="black",
+                bbox={"facecolor": "white", "edgecolor": "none"},
+            )
+
+        self.figure.tight_layout()  # Automatically adjusts the layout to fit the figure within the parent container
+
+        self.canvas = FigureCanvasTkAgg(self.figure, master=parent)
+        self.canvas.draw()
+        self.canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+        self.tips(raw.get_percentage(), parent)
+
+    def tips(self, percentage, parent):
+        descriptionFont = CTk.CTkFont(family="Helvetica", size=12, weight="bold")
+        ratingFont = CTk.CTkFont(family="Helvetica", size=12)
+
+        top_level = CTk.CTkToplevel(parent, fg_color=WHITE)
+        top_level.resizable(False,False)
+        top_level.title("Carbon Footprint Results")
+        top_level.geometry(f"400x600+{self.master.winfo_rootx()+self.winfo_width()-3}+{self.master.winfo_rooty()-30}")
+        formatted_percentage = format(100 * percentage, ".2f")
+        percentage *= 100
+        color = self.generate_hex_color(percentage)
+        rating = self.generate_rating(percentage)
+
+        self.canvas = CTk.CTkCanvas(
+            top_level, width=200, height=200, background=WHITE, highlightthickness=0
+        )
+        self.canvas.place(x=0, y=0)
+        self.progress = CircularProgressBar(
+            self.canvas, percentage=percentage, color=color, rating=rating[0]
+        )
+        description_label = CTk.CTkLabel(
+            top_level,
+            text=f"Your footprint rating: {formatted_percentage}%",
+            font=descriptionFont,
+            justify=CTk.LEFT,
+            width=195,
+            wraplength=200
+        )
+        description_label.place(x=200, y=30)
+        rating_label = CTk.CTkLabel(
+            top_level,
+            text=rating[1],
+            font=ratingFont,
+            justify=CTk.LEFT,
+            width=195,
+            wraplength=200
+        )
+        
+        label = CTk.CTkLabel(top_level, text="Check out these resources to learn more!", font=("Helvetica", 12, "bold"))
+        label.place(x=20,y=190)
+        rating_label.place(x=200, y=70)
+        self.links = Links(top_level,fg_color=WHITE,bg_color=WHITE,width=400, height=400)
+        self.links.place(x=0,y=210)
+
+
+    def generate_hex_color(self, value):
+        if value == 100:
+            return "#FF0000"
+        normalized_value = value / 100
+        hue = (120 - (normalized_value * 120)) / 360
+        r, g, b = colorsys.hsv_to_rgb(hue, 1, 1)
+
+        hex_color = "#{:02x}{:02x}{:02x}".format(
+            int(r * 255), int(g * 255), int(b * 255)
+        )
+
+        return hex_color
+
+    def generate_rating(self, percentage):
+        if percentage > 80:
+            rating = "VERY BAD"
+            response = "Your carbon footprint emission is very high. It is crucial to take immediate action to reduce your emissions and adopt more sustainable practices."
+        elif percentage > 60:
+            rating = "Bad"
+            response = "Your carbon footprint emission is high. Consider implementing changes in your lifestyle and habits to lower your emissions and contribute to a greener environment."
+        elif percentage > 50:
+        
+            rating = "Average"
+            response = "Your carbon footprint emission is at an average level. There is still room for improvement in reducing your emissions and embracing more eco-friendly choices."
+        
+        elif percentage > 30:
+            rating = "Good"
+            response = "Your carbon footprint emission is good. Keep up the efforts to lower your emissions and strive for even better sustainability practices."
+        
+        elif percentage > 15:
+            rating = "Very Good"
+            response = "Great job! Your carbon footprint emission is very low. Continue practicing sustainable behaviors to further reduce your emissions and protect the planet."
+        
+        elif percentage > 5:
+            rating = "Excellent!"
+            response = "Congratulations! Your carbon footprint emission is extremely low. You are making a significant positive impact on the environment with your sustainable practices."
+
+        elif percentage > 0:
+            rating = "Superb!"
+            response = "You are a role model for your dedication in reducing your carbon footprint. Keep up the great work and continue to inspire others to make sustainable choices. Together, we can create a greener future for our planet!"
+
+        return rating, response
+
+    def validate_entry(
+        self, event, entry: CTk.CTkEntry, button: CTk.CTkButton, command=None
+    ):
+        value = event.char
+        try:
+            float(entry.get())
+            isFloat = True
+        except ValueError:
+            isFloat = False
+
+        if value.isalpha() and value != "\x0D":
+            button.configure(state=CTk.DISABLED)
+        elif isFloat and command is not None:
+            command()
+        elif isFloat:
+            button.configure(require_redraw=True, state=CTk.NORMAL)
+        else:
+            button.configure(state=CTk.DISABLED)
+@dataclass
+class Vehicle:
+    name: str
+    days: Callable[[], int]
+    distance: Callable[[], int]
+
+    
+
+
+
+
+
+
+
+
 
 subprocess.run(["python", "./assets/introduction.py"], creationflags=subprocess.CREATE_NO_WINDOW)
 app = CarbonFootprintCalculator()
